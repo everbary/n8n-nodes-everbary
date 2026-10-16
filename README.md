@@ -46,7 +46,7 @@ Things to know:
 
 You need an eVerbary API key.
 
-1. Ask [support@everbary.com](mailto:support@everbary.com) for a key, or create one from your eVerbary account (see [eVerbary for developers](https://www.everbary.com/integrations/api)).
+1. Ask [support@everbary.com](mailto:support@everbary.com) for a key (a test key first, if you want to try the sandbox).
 2. In n8n, create an **eVerbary API** credential and paste the key. Leave **Base URL** as `https://orders.everbary.com`.
 3. n8n checks the key against `GET /v1/me` when you save.
 

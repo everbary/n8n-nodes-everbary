@@ -1,3 +1,9 @@
 dist
 node_modules
 *.tgz
+
+# Local assistant notes
+AGENTS.md
+CLAUDE.md
+.agents/
+.vscode/
