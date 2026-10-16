@@ -1,0 +1,156 @@
+{
+  "name": "eVerbary: quote and place a sandbox order",
+  "nodes": [
+    {
+      "id": "a1",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a2",
+      "name": "Download document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "a3",
+      "name": "Get quote",
+      "type": "n8n-nodes-everbary.everbary",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "everbaryApi": {
+          "id": "",
+          "name": "eVerbary API"
+        }
+      },
+      "executeOnce": true,
+      "parameters": {
+        "resource": "quote",
+        "operation": "get",
+        "languageFrom": "spanish",
+        "languageTo": "english",
+        "pages": 1
+      }
+    },
+    {
+      "id": "a4",
+      "name": "Create order",
+      "type": "n8n-nodes-everbary.everbary",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "everbaryApi": {
+          "id": "",
+          "name": "eVerbary API"
+        }
+      },
+      "parameters": {
+        "resource": "order",
+        "operation": "create",
+        "email": "paralegal@example.com",
+        "firstName": "Ana",
+        "lastName": "Ruiz",
+        "languageFrom": "spanish",
+        "languageTo": "english",
+        "pages": 1,
+        "binaryPropertyNames": "data",
+        "additionalFields": {
+          "case_number": "2026-114",
+          "client_first_name": "Carla",
+          "client_last_name": "Gomez"
+        }
+      }
+    },
+    {
+      "id": "a5",
+      "name": "Get order",
+      "type": "n8n-nodes-everbary.everbary",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "everbaryApi": {
+          "id": "",
+          "name": "eVerbary API"
+        }
+      },
+      "parameters": {
+        "resource": "order",
+        "operation": "get",
+        "orderNumber": "={{ $json.orderNumber }}"
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Download document",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download document": {
+      "main": [
+        [
+          {
+            "node": "Create order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create order": {
+      "main": [
+        [
+          {
+            "node": "Get order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
