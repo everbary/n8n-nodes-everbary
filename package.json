@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-everbary",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "n8n nodes for eVerbary: order certified translations for USCIS, courts and universities, follow them and get the finished files back.",
 	"license": "MIT",
 	"homepage": "https://github.com/everbary/n8n-nodes-everbary#readme",

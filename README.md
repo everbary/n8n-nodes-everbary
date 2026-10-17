@@ -64,7 +64,7 @@ Every Create request carries an `Idempotency-Key`. By default it is derived from
 
 ### Language codes
 
-Language fields list the languages from the API. In expressions use the codes from Language > Get Many, e.g. `spanish`, `portuguese`, `chineseSimp`, `english`.
+Language fields list the languages from the API. In expressions and AI agent tools you can use the code from Language > Get Many (`spanish`, `chineseSimp`, `portugueseBrazil`) or the language name in any case (`Spanish`, `Chinese (Simplified)`).
 
 ## Example workflow
 
@@ -97,6 +97,10 @@ Built with `@n8n/node-cli` 0.52 and tested on n8n 2.x. Requires n8n 1.0 or later
 - Support: [support@everbary.com](mailto:support@everbary.com)
 
 ## Version history
+
+### 0.1.1
+
+Language fields accept a code or a name in any case.
 
 ### 0.1.0
 

@@ -114,6 +114,22 @@ export function formEncode(fields: IDataObject): string {
 		.join('&');
 }
 
+/**
+ * The API's code for a language given as a code or a name in any case and
+ * spacing ("Spanish", "spanish", "Chinese (Simplified)", "chinesesimp").
+ * AI agents and expressions often send the name; the API only takes the code.
+ */
+export function matchLanguageCode(input: string, languages: IDataObject[]): string | undefined {
+	const key = (value: unknown) =>
+		String(value ?? '')
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, '');
+	const wanted = key(input);
+	if (!wanted) return undefined;
+	const hit = languages.find((language) => key(language.code) === wanted || key(language.name) === wanted);
+	return hit ? String(hit.code) : undefined;
+}
+
 export async function getLanguageOptions(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {

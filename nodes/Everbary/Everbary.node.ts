@@ -13,7 +13,12 @@ import { languageFields, languageOperations } from './descriptions/LanguageDescr
 import { orderFields, orderOperations } from './descriptions/OrderDescription';
 import { paymentLinkFields, paymentLinkOperations } from './descriptions/PaymentLinkDescription';
 import { quoteFields, quoteOperations } from './descriptions/QuoteDescription';
-import { everbaryApiRequest, formEncode, getLanguageOptions } from './GenericFunctions';
+import {
+	everbaryApiRequest,
+	formEncode,
+	getLanguageOptions,
+	matchLanguageCode,
+} from './GenericFunctions';
 import { listPrice, type Turnaround } from './pricing';
 
 const ORDER_BOOLEAN_FIELDS = ['expedited', 'expedited_plus', 'notarization'];
@@ -173,9 +178,35 @@ export class Everbary implements INodeType {
 	}
 }
 
+/**
+ * Source and target language as the API's codes. Accepts a code or a name in
+ * any case ("Spanish" from an AI agent becomes "spanish").
+ */
+async function resolveLanguages(this: IExecuteFunctions, i: number): Promise<[string, string]> {
+	const rawFrom = String(this.getNodeParameter('languageFrom', i) ?? '').trim();
+	const rawTo = String(this.getNodeParameter('languageTo', i) ?? '').trim() || 'english';
+	const response = await everbaryApiRequest.call(this, 'GET', '/v1/languages');
+	const languages = (response.languages ?? []) as IDataObject[];
+	const resolved = [rawFrom, rawTo].map((raw) => {
+		const code = matchLanguageCode(raw, languages);
+		if (!code) {
+			throw new NodeOperationError(
+				this.getNode(),
+				`Unknown language "${raw}". Use Language > Get Many for the accepted codes.`,
+				{ itemIndex: i },
+			);
+		}
+		return code;
+	}) as [string, string];
+	if (resolved[0] === resolved[1]) {
+		throw new NodeOperationError(this.getNode(), 'The source and target languages are the same', {
+			itemIndex: i,
+		});
+	}
+	return resolved;
+}
+
 async function getQuote(this: IExecuteFunctions, i: number): Promise<IDataObject> {
-	const languageFrom = this.getNodeParameter('languageFrom', i) as string;
-	const languageTo = (this.getNodeParameter('languageTo', i) as string) || 'english';
 	const pages = this.getNodeParameter('pages', i) as number;
 	const notarization = this.getNodeParameter('notarization', i) as boolean;
 
@@ -184,30 +215,14 @@ async function getQuote(this: IExecuteFunctions, i: number): Promise<IDataObject
 			itemIndex: i,
 		});
 	}
-	if (languageFrom === languageTo) {
-		throw new NodeOperationError(this.getNode(), 'The source and target languages are the same', {
-			itemIndex: i,
-		});
-	}
+	const [languageFrom, languageTo] = await resolveLanguages.call(this, i);
 
-	const [languages, turnaround, plus] = await Promise.all([
-		everbaryApiRequest.call(this, 'GET', '/v1/languages'),
+	const [turnaround, plus] = await Promise.all([
 		everbaryApiRequest.call(this, 'GET', '/v1/turnaround', { qs: { pages } }),
 		everbaryApiRequest.call(this, 'GET', '/v1/expedited-plus', {
 			qs: { language_from: languageFrom, language_to: languageTo },
 		}),
 	]);
-
-	const codes = new Set(((languages.languages ?? []) as IDataObject[]).map((l) => l.code));
-	for (const code of [languageFrom, languageTo]) {
-		if (!codes.has(code)) {
-			throw new NodeOperationError(
-				this.getNode(),
-				`Unknown language code "${code}". Use Language > Get Many for the accepted codes.`,
-				{ itemIndex: i },
-			);
-		}
-	}
 
 	const etas = (turnaround.options ?? {}) as IDataObject;
 	const plusAvailable = plus.available !== false;
@@ -250,12 +265,13 @@ async function runOrderOperation(
 			});
 		}
 
+		const [languageFrom, languageTo] = await resolveLanguages.call(this, i);
 		const fields: IDataObject = {
 			email: (this.getNodeParameter('email', i) as string).trim(),
 			first_name: this.getNodeParameter('firstName', i) as string,
 			last_name: this.getNodeParameter('lastName', i) as string,
-			language_from: this.getNodeParameter('languageFrom', i) as string,
-			language_to: (this.getNodeParameter('languageTo', i) as string) || 'english',
+			language_from: languageFrom,
+			language_to: languageTo,
 			pages,
 		};
 		for (const name of ORDER_BOOLEAN_FIELDS) {
